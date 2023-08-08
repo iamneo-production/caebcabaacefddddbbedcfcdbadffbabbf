@@ -1,75 +1,100 @@
-import React, { useState, useRef } from 'react';
-import "./Stopwatch.css";
-
+import React, { useState, useEffect } from "react";
+import './Stopwatch.css';
 const Stopwatch = () => {
+  // state to track the elapsed time
+  const [disable, setDisable] = useState(true);
+  const [visible, setVisible] = useState(true);
+  const [isStarted,setIsStarted]=useState(false);
+  const removeVisible = ()=>{
+    setVisible((prev)=>!prev);
+  }
+  const removeDisable= ()=>{
+    setDisable(false);
+  }
+  const enableDisable= ()=>{
+    setDisable(true);
+  }
 
-  const [timer, setTimer] = useState(0);
-  const [isActive, setIsActive] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const countRef = useRef(null);
+  const [time, setTime] = useState(0);
+  // state to track whether the stopwatch is running
+  const [isRunning, setIsRunning] = useState(false);
 
-  const formatTime = (time) => {
-    const hours = Math.floor((time / (1000 * 60 * 60)) % 24);
-    const minutes = Math.floor((time / 1000 / 60) % 60);
-    const seconds = Math.floor((time / 1000) % 60);
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  };
+  useEffect(() => {
+    let interval = null;
+    if (isRunning) {
+      interval = setInterval(() => {
+        setTime(time + 1);
+      }, 1000);
+    } else if (!isRunning && time !== 0) {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [isRunning, time]);
 
   const handleStart = () => {
-    setIsActive(true);
-    setIsPaused(false);
-    countRef.current = setInterval(() => {
-      setTimer((prevTimer) => prevTimer + 1000);
-    }, 1000);
+    removeDisable();
+    removeVisible();
+    setIsRunning(true);
+    setIsStarted(true);
   };
 
   const handlePause = () => {
-    clearInterval(countRef.current);
-    setIsPaused(true);
+    setIsRunning(false);
   };
 
   const handleResume = () => {
-    setIsPaused(false);
-    countRef.current = setInterval(() => {
-      setTimer((prevTimer) => prevTimer + 1000);
-    }, 1000);
+    setIsRunning(true);
   };
 
   const handleReset = () => {
-    clearInterval(countRef.current);
-    setIsActive(false);
-    setIsPaused(false);
-    setTimer(0);
+    setTime(0);
+    removeVisible();
+    setIsRunning(false);
+    enableDisable();
+    setIsStarted(false);
+  };
+
+  const formattedTime = () => {
+    const hours = Math.floor(time / 3600);
+    const minutes = Math.floor((time % 3600) / 60);
+    const seconds = time % 60;
+    return `${hours.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   };
 
   return (
-    <div className="stopwatch-container">
-    <h1>React Stopwatch</h1>
-      <div className="stopwatch-timer">
-      
-        <h1 data-testid="time">{formatTime(timer)}</h1>
-      </div>
-      <div className="stopwatch-buttons">
-        {!isActive && (
-          <button data-testid="start" onClick={handleStart}>
-            Start
-          </button>
+    <div className = "watch_container">
+      <h1 align="center">React Stopwatch</h1>
+      {/* display the elapsed time */}
+      <div className="time_style">
+      <h1 data-testid="time" className="timefont">{formattedTime()}</h1></div>
+      <div className = "button_con">
+      {/* start button */}
+        {visible &&(
+            <button data-testid="start" onClick={handleStart}>
+              Start
+            </button>
         )}
-        {isActive && !isPaused && (
-          <button data-testid="pause" onClick={handlePause}>
-            Pause
-          </button>
-        )}
-        {isActive && isPaused && (
-          <button data-testid="resume" onClick={handleResume}>
-            Resume
-          </button>
-        )}
-        <button data-testid="reset" onClick={handleReset} disabled={!isActive}
-        style={{ marginLeft: "10px" }}>
-          Reset
+        {/* pause button */}
+      {isRunning && (
+        <button data-testid="pause" onClick={handlePause}>
+          Pause
         </button>
-      </div>
+      )}
+      {/* resume button */}
+      {!isRunning && isStarted && (
+        <button data-testid="resume" onClick={handleResume}>
+          Resume
+        </button>
+      )}
+      { (
+        <button data-testid="reset" onClick={handleReset} disabled={disable} className="leftbtn">
+            Reset
+        </button>
+      )}
+
+        </div>
     </div>
   );
 };
